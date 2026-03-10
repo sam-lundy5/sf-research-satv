@@ -73,9 +73,15 @@ def create_signal():
         .alias("signal")
     )
 
+    #lag returns
+    df = df.with_columns(
+    pl.col("return").shift(1).over("barrid").alias("return")
+    )
+
     #some filters
     df = df.filter(
         (pl.col("signal").is_not_null()) &
+        (pl.col("return").is_not_null()) &
         (pl.col("price") >= 5)
     )
 
@@ -97,10 +103,12 @@ def create_signal():
         .alias("score"),
     )
 
+    scores = scores
+
     #compute alphas
     alphas = (
         scores.with_columns(pl.col("score").mul(IC).mul("specific_risk").alias("alpha"))
-        .select("date", "barrid", "alpha", "signal", "return", "predicted_beta")
+        # .select("date", "barrid", "alpha", "signal", "return", "predicted_beta")
         .sort("date", "barrid")
     )
 
